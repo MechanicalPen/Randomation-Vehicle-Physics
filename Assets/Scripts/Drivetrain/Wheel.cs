@@ -197,6 +197,8 @@ namespace RVP
         public PhysicMaterial detachedTireMaterial;
         public PhysicMaterial detachedRimMaterial;
 
+        private RaycastHit[] wheelHits = new RaycastHit[16];
+
         void Start() {
             tr = transform;
             rb = tr.GetTopmostParentComponent<Rigidbody>();
@@ -415,7 +417,7 @@ namespace RVP
         // Use raycasting to find the current contact point for the wheel
         void GetWheelContact() {
             float castDist = Mathf.Max(suspensionParent.suspensionDistance * Mathf.Max(0.001f, suspensionParent.targetCompression) + actualRadius, 0.001f);
-            RaycastHit[] wheelHits = Physics.RaycastAll(suspensionParent.maxCompressPoint, suspensionParent.springDirection, castDist, GlobalControl.wheelCastMaskStatic);
+            int hits = Physics.SphereCastNonAlloc(suspensionParent.maxCompressPoint, this.setTireWidth, suspensionParent.springDirection, wheelHits, castDist - this.setTireWidth, GlobalControl.wheelCastMaskStatic, QueryTriggerInteraction.Ignore);
             RaycastHit hit;
             int hitIndex = 0;
             bool validHit = false;
@@ -423,7 +425,7 @@ namespace RVP
 
             if (connected) {
                 // Loop through raycast hits to find closest one
-                for (int i = 0; i < wheelHits.Length; i++) {
+                for (int i = 0; i < hits; i++) {
                     if (!wheelHits[i].transform.IsChildOf(vp.tr) && wheelHits[i].distance < hitDist) {
                         hitIndex = i;
                         hitDist = wheelHits[i].distance;
@@ -445,7 +447,7 @@ namespace RVP
                 }
 
                 grounded = true;
-                contactPoint.distance = hit.distance - actualRadius;
+                contactPoint.distance = hit.distance - actualRadius + this.setTireWidth;
                 contactPoint.point = hit.point + localVel * Time.fixedDeltaTime;
                 contactPoint.grounded = true;
                 contactPoint.normal = hit.normal;
