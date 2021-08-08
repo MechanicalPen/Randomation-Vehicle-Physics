@@ -197,7 +197,12 @@ namespace RVP
         public PhysicMaterial detachedTireMaterial;
         public PhysicMaterial detachedRimMaterial;
 
+        // we store some stuff here so we don't have alloc it.
         private RaycastHit[] wheelHits = new RaycastHit[16];
+        private Collider cachedCollider = null;
+        GroundSurfaceInstance cachedColliderSurface = null;
+        TerrainSurface cachedColliderTerrain = null;
+
 
         void Start() {
             tr = transform;
@@ -462,8 +467,16 @@ namespace RVP
                     contactVelocity = Vector3.zero;
                 }
 
-                GroundSurfaceInstance curSurface = hit.collider.GetComponent<GroundSurfaceInstance>();
-                TerrainSurface curTerrain = hit.collider.GetComponent<TerrainSurface>();
+                GroundSurfaceInstance curSurface;
+                TerrainSurface curTerrain;
+                if (true || cachedCollider == null || cachedCollider != hit.collider)
+                {
+                    cachedCollider = hit.collider;
+                    cachedColliderSurface = hit.collider.GetComponent<GroundSurfaceInstance>();
+                    cachedColliderTerrain = hit.collider.GetComponent<TerrainSurface>();
+                }
+                curSurface = cachedColliderSurface;
+                curTerrain = cachedColliderTerrain;
 
                 if (curSurface) {
                     contactPoint.surfaceFriction = curSurface.friction;
